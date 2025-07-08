@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Signage Price Estimator</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <style>
+    body { font-family: Arial, sans-serif; background: #f6f6f6; padding: 40px; }
+    .container { max-width: 400px; background: #fff; margin: auto; padding: 30px 30px 20px 30px; border-radius: 8px; box-shadow: 0 2px 8px #ccc; }
+    h1 { text-align: center; font-size: 1.6em; }
+    label { display: block; margin: 16px 0 6px 0; }
+    input, select { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #bbb; box-sizing: border-box; }
+    button { margin-top: 20px; width: 100%; background: #0078d4; color: #fff; border: none; border-radius: 5px; padding: 10px; font-size: 1.1em; cursor: pointer; }
+    button:hover { background: #005fa3; }
+    .result { margin-top: 25px; padding: 12px; background: #e7f7e4; border: 1px solid #b5dfb2; border-radius: 5px; font-size: 1.1em; text-align: center; }
+    .note { font-size: 0.9em; color: #888; margin-top: 10px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Signage Price Estimator</h1>
+    <form id="signage-form" onsubmit="return calculatePrice();">
+      <label for="length">Length (feet):</label>
+      <input type="number" step="0.01" min="0.01" id="length" required>
+
+      <label for="width">Width (feet):</label>
+      <input type="number" step="0.01" min="0.01" id="width" required>
+
+      <label for="type">Type of Sign:</label>
+      <select id="type" required>
+        <option value="vinyl">Vinyl Banner</option>
+        <option value="acrylic">Acrylic</option>
+        <option value="metal">Metal</option>
+        <option value="led">LED</option>
+        <option value="wood">Wooden</option>
+        <option value="foam">Foam Board</option>
+        <option value="channel">Channel Letters</option>
+        <option value="lightbox">Lightbox</option>
+        <option value="cabinet">Cabinet Sign</option>
+        <option value="pylon">Pylon Sign</option>
+      </select>
+
+      <button type="submit">Estimate Price</button>
+    </form>
+    <div class="result" id="result" style="display:none"></div>
+    <div class="note">* Estimates are based on typical U.S. market values (2024-2025). For reference only.<br>
+    Pricing is per square foot (ft²).</div>
+  </div>
+  <script>
+    // Average U.S. base cost per square foot for sign types (USD, 2024-2025 estimates)
+    const baseCosts = {
+      vinyl: 7,        // Vinyl Banner
+      acrylic: 20,     // Acrylic
+      metal: 25,       // Metal
+      led: 45,         // LED panel sign
+      wood: 15,        // Wooden
+      foam: 9,         // Foam Board
+      channel: 65,     // Channel Letters
+      lightbox: 40,    // Lightbox
+      cabinet: 35,     // Cabinet Sign
+      pylon: 85        // Pylon Sign
+    };
+    const profitFactor = 1.0; // No extra markup
+
+    function calculatePrice() {
+      const length = parseFloat(document.getElementById('length').value);
+      const width = parseFloat(document.getElementById('width').value);
+      const type = document.getElementById('type').value;
+
+      if(isNaN(length) || isNaN(width) || length <= 0 || width <= 0) {
+        alert("Please enter valid dimensions.");
+        return false;
+      }
+
+      const area = length * width;
+      const baseCost = baseCosts[type];
+      const price = area * baseCost * profitFactor;
+
+      document.getElementById('result').innerHTML = 
+        `<b>Estimated Price:</b> $${price.toFixed(2)} USD<br>
+        (Area: ${area.toFixed(2)} ft&sup2; × $${baseCost} per ft&sup2;)`;
+      document.getElementById('result').style.display = 'block';
+
+      return false; // Prevent form submission
+    }
+  </script>
+</body>
+</html>
