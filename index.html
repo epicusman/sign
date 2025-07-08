@@ -6,14 +6,18 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <style>
     body { font-family: Arial, sans-serif; background: #f6f6f6; padding: 40px; }
-    .container { max-width: 400px; background: #fff; margin: auto; padding: 30px 30px 20px 30px; border-radius: 8px; box-shadow: 0 2px 8px #ccc; }
+    .container { max-width: 600px; background: #fff; margin: auto; padding: 30px 30px 20px 30px; border-radius: 8px; box-shadow: 0 2px 8px #ccc; }
     h1 { text-align: center; font-size: 1.6em; }
     label { display: block; margin: 16px 0 6px 0; }
     input, select { width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #bbb; box-sizing: border-box; }
     button { margin-top: 20px; width: 100%; background: #0078d4; color: #fff; border: none; border-radius: 5px; padding: 10px; font-size: 1.1em; cursor: pointer; }
     button:hover { background: #005fa3; }
-    .result { margin-top: 25px; padding: 12px; background: #e7f7e4; border: 1px solid #b5dfb2; border-radius: 5px; font-size: 1.1em; text-align: center; }
+    .result { margin-top: 25px; padding: 12px; background: #e7f7e4; border: 1px solid #b5dfb2; border-radius: 5px; font-size: 1.1em; }
     .note { font-size: 0.9em; color: #888; margin-top: 10px; text-align: center; }
+    table { width: 100%; border-collapse: collapse; margin-top: 18px; font-size: 0.98em; }
+    th, td { border: 1px solid #bbb; padding: 6px 8px; text-align: left; }
+    th { background: #e2e7f3; }
+    .totalrow { font-weight: bold; background: #f0f8e7; }
   </style>
 </head>
 <body>
@@ -44,22 +48,99 @@
     </form>
     <div class="result" id="result" style="display:none"></div>
     <div class="note">* Estimates are based on typical U.S. market values (2024-2025). For reference only.<br>
-    Pricing is per square foot (ft²).</div>
+    Pricing is per square foot (ft²).<br>
+    Material weights and prices are approximate and may vary.</div>
   </div>
   <script>
-    // Average U.S. base cost per square foot for sign types (USD, 2024-2025 estimates)
+    // Base cost per ft² for sign types (USD, 2024-2025 estimates)
     const baseCosts = {
-      vinyl: 7,        // Vinyl Banner
-      acrylic: 20,     // Acrylic
-      metal: 25,       // Metal
-      led: 45,         // LED panel sign
-      wood: 15,        // Wooden
-      foam: 9,         // Foam Board
-      channel: 65,     // Channel Letters
-      lightbox: 40,    // Lightbox
-      cabinet: 35,     // Cabinet Sign
-      pylon: 85        // Pylon Sign
+      vinyl: 7,
+      acrylic: 20,
+      metal: 25,
+      led: 45,
+      wood: 15,
+      foam: 9,
+      channel: 65,
+      lightbox: 40,
+      cabinet: 35,
+      pylon: 85
     };
+
+    // Material database per sign type: name, specs, coverage per ft², unit, price per unit, weight/unit, weight/unit_name
+    // coverage: how much material is used per 1 ft² of sign
+    const signMaterials = {
+      vinyl: [
+        { name: "PVC Banner Material", specs: "13oz, 54\" wide roll", coverage: 1, unit: "ft²", price: 0.80, weight: 0.20, weight_unit: "lb" },
+        { name: "Solvent Ink", specs: "Outdoor, fade-resistant", coverage: 0.01, unit: "liter", price: 18, weight: 0.02, weight_unit: "lb" },
+        { name: "Nylon Hem Cord", specs: "1/4\"", coverage: 0.3, unit: "ft", price: 0.10, weight: 0.01, weight_unit: "lb" },
+        { name: "Grommets", specs: "Brass, #2", coverage: 0.08, unit: "pcs", price: 0.12, weight: 0.03, weight_unit: "lb" },
+        { name: "Double-sided Tape", specs: "Outdoor, 1\" wide", coverage: 0.25, unit: "ft", price: 0.09, weight: 0.01, weight_unit: "lb" }
+      ],
+      acrylic: [
+        { name: "Acrylic Sheet", specs: "3/16\" clear", coverage: 1, unit: "ft²", price: 4.80, weight: 0.75, weight_unit: "lb" },
+        { name: "Vinyl Graphics", specs: "Premium cut", coverage: 1, unit: "ft²", price: 1.80, weight: 0.04, weight_unit: "lb" },
+        { name: "Adhesive", specs: "Solvent cement", coverage: 0.01, unit: "liter", price: 12, weight: 0.02, weight_unit: "lb" },
+        { name: "Mounting Hardware", specs: "Stainless standoffs", coverage: 0.10, unit: "pcs", price: 1.60, weight: 0.08, weight_unit: "lb" },
+        { name: "Protective Film", specs: "PE, removable", coverage: 1, unit: "ft²", price: 0.07, weight: 0.01, weight_unit: "lb" }
+      ],
+      metal: [
+        { name: "Aluminum Sheet", specs: "0.080\" thick", coverage: 1, unit: "ft²", price: 5.20, weight: 1.10, weight_unit: "lb" },
+        { name: "Reflective Vinyl", specs: "Engineer grade", coverage: 1, unit: "ft²", price: 1.90, weight: 0.04, weight_unit: "lb" },
+        { name: "Mounting Brackets", specs: "Aluminum, 2\"", coverage: 0.10, unit: "pcs", price: 2.30, weight: 0.10, weight_unit: "lb" },
+        { name: "Protective Laminate", specs: "UV, gloss", coverage: 1, unit: "ft²", price: 0.85, weight: 0.02, weight_unit: "lb" },
+        { name: "Stainless Bolts", specs: "1/4\" x 1\"", coverage: 0.12, unit: "pcs", price: 0.20, weight: 0.03, weight_unit: "lb" }
+      ],
+      led: [
+        { name: "Aluminum Face/Back", specs: "0.063\" thick sheet", coverage: 1.2, unit: "ft²", price: 5.00, weight: 1.00, weight_unit: "lb" },
+        { name: "LED Modules", specs: "IP65, 12V, 1W", coverage: 0.22, unit: "pcs", price: 2.80, weight: 0.09, weight_unit: "lb" },
+        { name: "Acrylic Diffuser", specs: "1/8\" opal", coverage: 1, unit: "ft²", price: 4.00, weight: 0.60, weight_unit: "lb" },
+        { name: "Power Supply", specs: "60W, 12V", coverage: 0.02, unit: "pcs", price: 32, weight: 1.40, weight_unit: "lb" },
+        { name: "Mounting Frame", specs: "Steel angle", coverage: 0.12, unit: "ft", price: 1.40, weight: 0.25, weight_unit: "lb" }
+      ],
+      wood: [
+        { name: "Plywood Panel", specs: "1/2\" exterior", coverage: 1, unit: "ft²", price: 1.90, weight: 1.60, weight_unit: "lb" },
+        { name: "Paint", specs: "Acrylic outdoor", coverage: 0.03, unit: "liter", price: 7.00, weight: 0.07, weight_unit: "lb" },
+        { name: "Clear Coat", specs: "Polyurethane", coverage: 0.03, unit: "liter", price: 7.50, weight: 0.07, weight_unit: "lb" },
+        { name: "Mounting Screws", specs: "#8 x 1.5\"", coverage: 0.12, unit: "pcs", price: 0.08, weight: 0.02, weight_unit: "lb" },
+        { name: "Vinyl Lettering", specs: "Standard", coverage: 1, unit: "ft²", price: 1.40, weight: 0.03, weight_unit: "lb" }
+      ],
+      foam: [
+        { name: "Foam Board", specs: "3/16\" white", coverage: 1, unit: "ft²", price: 0.70, weight: 0.13, weight_unit: "lb" },
+        { name: "Adhesive", specs: "Spray, 3M 77", coverage: 0.01, unit: "liter", price: 6.00, weight: 0.02, weight_unit: "lb" },
+        { name: "Vinyl Print", specs: "Full color", coverage: 1, unit: "ft²", price: 1.10, weight: 0.03, weight_unit: "lb" },
+        { name: "Edge Tape", specs: "Black, 1/2\"", coverage: 0.3, unit: "ft", price: 0.07, weight: 0.01, weight_unit: "lb" },
+        { name: "Mounting Tabs", specs: "Plastic, 1\"", coverage: 0.10, unit: "pcs", price: 0.18, weight: 0.01, weight_unit: "lb" }
+      ],
+      channel: [
+        { name: "Aluminum Return Coil", specs: "0.040\" x 4\"", coverage: 0.90, unit: "ft", price: 1.80, weight: 0.12, weight_unit: "lb" },
+        { name: "Acrylic Face", specs: "3/16\" white", coverage: 1, unit: "ft²", price: 4.80, weight: 0.75, weight_unit: "lb" },
+        { name: "LED Modules", specs: "IP65, 12V, 1W", coverage: 0.22, unit: "pcs", price: 2.80, weight: 0.09, weight_unit: "lb" },
+        { name: "Trim Cap", specs: "1\" plastic", coverage: 1.1, unit: "ft", price: 0.60, weight: 0.03, weight_unit: "lb" },
+        { name: "Back Panel (Alum)", specs: "0.063\" thick", coverage: 1, unit: "ft²", price: 3.70, weight: 1.00, weight_unit: "lb" }
+      ],
+      lightbox: [
+        { name: "Aluminum Frame", specs: "2\" profile", coverage: 0.45, unit: "ft", price: 2.50, weight: 0.13, weight_unit: "lb" },
+        { name: "Acrylic Face", specs: "3/16\" opal", coverage: 1, unit: "ft²", price: 4.80, weight: 0.75, weight_unit: "lb" },
+        { name: "LED Strips", specs: "12V, high output", coverage: 0.18, unit: "ft", price: 2.10, weight: 0.04, weight_unit: "lb" },
+        { name: "Power Supply", specs: "60W, 12V", coverage: 0.02, unit: "pcs", price: 32, weight: 1.40, weight_unit: "lb" },
+        { name: "Vinyl Graphics", specs: "Translucent", coverage: 1, unit: "ft²", price: 2.10, weight: 0.04, weight_unit: "lb" }
+      ],
+      cabinet: [
+        { name: "Aluminum Cabinet", specs: "0.080\" thick", coverage: 1.2, unit: "ft²", price: 5.50, weight: 1.30, weight_unit: "lb" },
+        { name: "Acrylic Face", specs: "3/16\" opal", coverage: 1, unit: "ft²", price: 4.80, weight: 0.75, weight_unit: "lb" },
+        { name: "LED Tubes", specs: "T8, 6500K", coverage: 0.06, unit: "pcs", price: 9.00, weight: 0.35, weight_unit: "lb" },
+        { name: "Mounting Brackets", specs: "Steel", coverage: 0.08, unit: "pcs", price: 2.50, weight: 0.22, weight_unit: "lb" },
+        { name: "Vinyl Graphics", specs: "Translucent", coverage: 1, unit: "ft²", price: 2.10, weight: 0.04, weight_unit: "lb" }
+      ],
+      pylon: [
+        { name: "Steel Post", specs: "6\" x 6\" x 10ft", coverage: 0.03, unit: "pcs", price: 160, weight: 65, weight_unit: "lb" },
+        { name: "Aluminum Panel", specs: "0.125\" thick", coverage: 1.5, unit: "ft²", price: 8.80, weight: 2.00, weight_unit: "lb" },
+        { name: "Acrylic Face", specs: "3/16\" opal", coverage: 1, unit: "ft²", price: 4.80, weight: 0.75, weight_unit: "lb" },
+        { name: "LED Modules", specs: "IP65, 12V, 1W", coverage: 0.15, unit: "pcs", price: 2.80, weight: 0.09, weight_unit: "lb" },
+        { name: "Vinyl Graphics", specs: "Translucent", coverage: 1, unit: "ft²", price: 2.10, weight: 0.04, weight_unit: "lb" }
+      ]
+    };
+
     const profitFactor = 1.0; // No extra markup
 
     function calculatePrice() {
@@ -76,9 +157,64 @@
       const baseCost = baseCosts[type];
       const price = area * baseCost * profitFactor;
 
-      document.getElementById('result').innerHTML = 
-        `<b>Estimated Price:</b> $${price.toFixed(2)} USD<br>
-        (Area: ${area.toFixed(2)} ft&sup2; × $${baseCost} per ft&sup2;)`;
+      // Calculate materials
+      const matList = signMaterials[type];
+      let totalMatCost = 0;
+      let matRows = '';
+
+      matList.forEach(mat => {
+        // How much of this material is used? (proportional to sign area)
+        // e.g., coverage = 1 per ft², so for 10 ft² sign, use 10 units;
+        // if coverage = 0.1 per ft², then 10 ft² uses 1 unit.
+        let qty = mat.coverage * area;
+        let unitLabel = mat.unit;
+        // For units in "pcs", round up to the next integer
+        if (unitLabel === "pcs") qty = Math.ceil(qty * 100) / 100; // 2 decimals for small items
+        else qty = Math.round(qty * 100) / 100;
+
+        // Weight for this material
+        const totalWeight = Math.round(qty * mat.weight * 100) / 100;
+
+        // Cost for this material
+        const cost = Math.round(qty * mat.price * 100) / 100;
+        totalMatCost += cost;
+
+        matRows += `
+        <tr>
+          <td>${mat.name}</td>
+          <td>${mat.specs}</td>
+          <td>${qty} ${unitLabel}</td>
+          <td>${totalWeight} ${mat.weight_unit}</td>
+          <td>$${mat.price} / ${unitLabel}</td>
+          <td>$${cost}</td>
+        </tr>
+        `;
+      });
+
+      totalMatCost = Math.round(totalMatCost * 100) / 100;
+
+      let resultHtml = `
+        <b>Estimated Price:</b> $${price.toFixed(2)} USD<br>
+        (Area: ${area.toFixed(2)} ft&sup2; × $${baseCost} per ft&sup2;)<br><br>
+        <b>Material Breakdown:</b>
+        <table>
+          <tr>
+            <th>Material</th>
+            <th>Specs</th>
+            <th>Quantity</th>
+            <th>Weight</th>
+            <th>Unit Price</th>
+            <th>Material Cost</th>
+          </tr>
+          ${matRows}
+          <tr class="totalrow">
+            <td colspan="5" style="text-align:right;">Total Material Cost:</td>
+            <td>$${totalMatCost}</td>
+          </tr>
+        </table>
+      `;
+
+      document.getElementById('result').innerHTML = resultHtml;
       document.getElementById('result').style.display = 'block';
 
       return false; // Prevent form submission
